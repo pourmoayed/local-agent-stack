@@ -131,13 +131,9 @@ The repo includes a working agent that ties the services together: an n8n workfl
 - Set strong, unique values for every secret in `.env`.
 - Postgres, n8n and Ollama are pinned to specific versions. Open WebUI (`main`) and SearXNG (`latest`) follow upstream, so a fresh pull may differ from what this stack was tested with. Pin them if you need reproducible deployments.
 
-<!-- Enable once github.com/pourmoayed/nim-agent-proxy is public:
-
 ## Related
 
 - [nim-agent-proxy](https://github.com/pourmoayed/nim-agent-proxy): run Codex CLI or Claude Code against free NVIDIA-hosted models through a local LiteLLM proxy.
-
--->
 
 ## Project status
 

@@ -1,0 +1,28 @@
+# SearXNG settings
+
+# General settings
+use_default_settings: true
+
+# Search settings
+search:
+  safe_search: 0
+  autocomplete: google
+  formats:
+    - html
+    - json
+
+# Server settings
+server:
+  limiter: false 
+
+# Engines settings
+engines:
+  - name: google
+    engine: google
+    shortcut: g
+  - name: bing
+    engine: bing
+    shortcut: b
+  - name: duckduckgo
+    engine: duckduckgo
+    shortcut: ddg

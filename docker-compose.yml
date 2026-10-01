@@ -1,0 +1,84 @@
+services:
+  # --- DATABASE (SUPABASE POSTGRES) ---
+  supabase-db:
+    image: supabase/postgres:17.6.1.136
+    container_name: supabase_postgres
+    restart: always
+    ports:
+      - "127.0.0.1:54322:5432"
+    environment:
+      - POSTGRES_PASSWORD=${SUPABASE_DB_PASSWORD}
+    volumes:
+      - supabase_db_data:/var/lib/postgresql/data
+
+  # --- AUTOMATION ENGINE (n8n) ---
+  n8n:
+    image: docker.n8n.io/n8nio/n8n:2.33.3
+    container_name: n8n_automation
+    restart: always
+    ports:
+      - "127.0.0.1:5678:5678"
+    environment:
+      - DB_TYPE=postgresdb
+      - DB_POSTGRESDB_HOST=supabase-db
+      - DB_POSTGRESDB_PORT=5432
+      - DB_POSTGRESDB_DATABASE=postgres
+      - DB_POSTGRESDB_USER=postgres
+      - DB_POSTGRESDB_PASSWORD=${SUPABASE_DB_PASSWORD}
+      - N8N_ENFORCE_SETTINGS_FILE_PERMISSIONS=true
+      - N8N_RUNNERS_ENABLED=true
+      - GENERIC_TIMEZONE=${SYSTEM_TIMEZONE}
+      - TZ=${SYSTEM_TIMEZONE}
+    volumes:
+      - n8n_data:/home/node/.n8n
+    depends_on:
+      - supabase-db
+
+  # --- LOCAL AI RUNTIME (OLLAMA) ---
+  ollama:
+    image: ollama/ollama:0.32.5
+    container_name: ollama_ai
+    restart: always
+    ports:
+      # Host port 11435 avoids clashing with a native Ollama install (which uses 11434)
+      - "127.0.0.1:11435:11434"
+    volumes:
+      - ollama_data:/root/.ollama
+    environment:
+      - OLLAMA_HOST=0.0.0.0
+      - OLLAMA_API_KEY=${OLLAMA_CLOUD_API_KEY}
+
+  # --- AI INTERFACE (OPEN WEBUI) ---
+  open-webui:
+    image: ghcr.io/open-webui/open-webui:main
+    container_name: open_webui
+    restart: always
+    ports:
+      - "127.0.0.1:3000:8080"
+    environment:
+      - OLLAMA_BASE_URL=http://ollama:11434
+      - WEBUI_SECRET_KEY=${WEBUI_JWT_SECRET}
+    volumes:
+      - open_webui_data:/app/backend/data
+    depends_on:
+      - ollama
+
+  # --- SEARCH ENGINE (SEARXNG) ---
+  searxng:
+    image: searxng/searxng:latest
+    container_name: searxng_search
+    restart: always
+    ports:
+      - "127.0.0.1:8081:8080"
+    environment:
+      - SEARXNG_SETTINGS_PATH=/etc/searxng/settings.yml
+      - SEARXNG_SECRET=${SEARXNG_SECRET}
+    volumes:
+      - ./config/searxng:/etc/searxng
+
+volumes:
+  supabase_db_data:
+  n8n_data:
+  ollama_data:
+  open_webui_data:
+

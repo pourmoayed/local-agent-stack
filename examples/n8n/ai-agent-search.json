@@ -1,0 +1,217 @@
+{
+  "id": "aiAgentSearch0001",
+  "name": "AI Agent - Web Search",
+  "nodes": [
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "ai-agent-search",
+        "responseMode": "responseNode",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2.1,
+      "position": [
+        -256,
+        0
+      ],
+      "id": "05721d9e-a82f-4a3d-8783-f6780816a4ef",
+      "name": "Webhook",
+      "webhookId": "f9c204e6-78c4-4877-b7d3-3cbfee171bae"
+    },
+    {
+      "parameters": {
+        "options": {
+          "systemMessage": "=You are a web research assistant. Today's date is {{ $now.format('yyyy-MM-dd') }}.\n\nUse the SearXNG search tool whenever the question needs current or factual information. For broad questions such as news, run more than one search with different wording.\n\nRules:\n- Base your answer only on the search results. If they don't cover the question, say so instead of guessing.\n- Cite every claim with its source as a markdown link, [Publisher](https://full-url), using URLs that appear in the search results. Never invent or shorten a URL.\n- Prefer recent results and named, reputable publishers over unattributed pages.\n- Be concise: a short list or a few sentences, no filler."
+        }
+      },
+      "type": "@n8n/n8n-nodes-langchain.agent",
+      "typeVersion": 3.1,
+      "position": [
+        224,
+        0
+      ],
+      "id": "e122df7c-4331-4e03-9c72-6a82865210ff",
+      "name": "AI Agent"
+    },
+    {
+      "parameters": {
+        "model": "gemma4:31b",
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.lmChatOllama",
+      "typeVersion": 1,
+      "position": [
+        96,
+        208
+      ],
+      "id": "546efe94-543d-41b7-baed-2ab1bef5bece",
+      "name": "Ollama Chat Model",
+      "credentials": {
+        "ollamaApi": {
+          "name": "Ollama account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "sessionIdType": "customKey",
+        "sessionKey": "={{ String($json.session_id) }}"
+      },
+      "type": "@n8n/n8n-nodes-langchain.memoryPostgresChat",
+      "typeVersion": 1.4,
+      "position": [
+        240,
+        208
+      ],
+      "id": "6c5399d1-ce7d-419a-90a1-68c25a35a2c8",
+      "name": "Postgres Chat Memory",
+      "credentials": {
+        "postgres": {
+          "name": "Postgres account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.toolSearXng",
+      "typeVersion": 1,
+      "position": [
+        384,
+        208
+      ],
+      "id": "b166bc8e-3eba-4409-b9db-9f9650ced12c",
+      "name": "SearXNG",
+      "credentials": {
+        "searXngApi": {
+          "name": "SearXNG account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "respondWith": "json",
+        "responseBody": "={\n  \"output\": {{ JSON.stringify($json.output) }}\n}",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1.5,
+      "position": [
+        592,
+        0
+      ],
+      "id": "92618cac-7850-4ca4-adc3-02f885ea0a44",
+      "name": "Respond to Webhook"
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "c29a15a0-de0c-45b4-851a-63e0e0e438a6",
+              "name": "session_id",
+              "value": "={{ $json.body.session_id }}",
+              "type": "string"
+            },
+            {
+              "id": "d3f06e48-f6ba-40ad-85da-d126c4f0058e",
+              "name": "chatInput",
+              "value": "={{ $json.body.chat_input }}",
+              "type": "string"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.5,
+      "position": [
+        -32,
+        32
+      ],
+      "id": "d18d748c-1e9a-4496-9199-20cfe6dd2e2c",
+      "name": "Edit Fields"
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "Webhook": {
+      "main": [
+        [
+          {
+            "node": "Edit Fields",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Ollama Chat Model": {
+      "ai_languageModel": [
+        [
+          {
+            "node": "AI Agent",
+            "type": "ai_languageModel",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Postgres Chat Memory": {
+      "ai_memory": [
+        [
+          {
+            "node": "AI Agent",
+            "type": "ai_memory",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "SearXNG": {
+      "ai_tool": [
+        [
+          {
+            "node": "AI Agent",
+            "type": "ai_tool",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "AI Agent": {
+      "main": [
+        [
+          {
+            "node": "Respond to Webhook",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Edit Fields": {
+      "main": [
+        [
+          {
+            "node": "AI Agent",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": false,
+  "settings": {
+    "executionOrder": "v1",
+    "binaryMode": "separate",
+    "availableInMCP": false
+  },
+  "meta": {
+    "templateCredsSetupCompleted": true
+  },
+  "tags": []
+}

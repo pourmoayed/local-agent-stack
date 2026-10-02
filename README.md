@@ -80,6 +80,26 @@ By default the `ollama` container runs on CPU, so stick to small models. To use 
 
 Whichever you use, choose a model that supports tool calling if you want it to drive agents or tools.
 
+### Context length
+
+The `ollama` container does not set a context length, so it uses Ollama's built-in default. That has historically been 4096 tokens, and newer Ollama versions may choose a larger default based on available VRAM. A small window fills quickly with search results, and Ollama silently drops the oldest tokens, so an agent can appear to forget what a search returned. If that happens, check the context length first.
+
+To raise it for every request, add `OLLAMA_CONTEXT_LENGTH` to the `environment` section of the `ollama` service in [docker-compose.yml](docker-compose.yml), then recreate the container:
+
+```yaml
+  ollama:
+    environment:
+      - OLLAMA_CONTEXT_LENGTH=16384
+```
+
+```bash
+docker compose up -d ollama
+```
+
+A larger context uses more memory for the KV cache, which slows generation or fails to load if the model no longer fits. Raise it only as far as you need. To see what a loaded model is actually using, run `docker exec -it ollama_ai ollama ps`.
+
+This applies to local models only. Ollama Cloud models run on ollama.com with their own limits.
+
 ### Using SearXNG as a search tool
 
 SearXNG is configured to return JSON ([config/searxng/settings.yml](config/searxng/settings.yml)). Inside the compose network, call it at:
